@@ -171,8 +171,7 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 exec xrandr --output HDMI-1 --set underscan on --set "underscan vborder" 28 --set "underscan hborder" 38 --mode "1920x1080"
-exec setxkbmap -option "caps:swapescape,lv3:ralt_alt" -layout us -variant altgr-intl
-# exec flameshot
+exec setxkbmap -option "caps:swapescape,lv3:ralt_alt,grp:lwin_toggle" -layout us,br -variant altgr-intl
 exec_always --no-startup-id lxpolkit
 
 bindsym Print exec flameshot gui

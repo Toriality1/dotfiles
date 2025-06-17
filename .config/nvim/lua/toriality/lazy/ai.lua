@@ -7,8 +7,10 @@ return {
     config = function ()
         require("codeium").setup({
             virtual_text = {
-                enabled = true
-            }
+                enabled = true,
+                idle_delay = 500
+            },
+            vim.keymap.set('n', '<leader>x', '<cmd>Codeium Toggle<CR>')
         })
     end
 }
