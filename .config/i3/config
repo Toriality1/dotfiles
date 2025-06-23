@@ -170,6 +170,8 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+bindsym $mod+F1 exec --no-startup-id ~/.config/i3/random_wallpaper.sh
+
 exec xrandr --output HDMI-1 --set underscan on --set "underscan vborder" 28 --set "underscan hborder" 38 --mode "1920x1080"
 exec_always --no-startup-id lxpolkit
 exec_always setxkbmap -option "caps:swapescape,lv3:ralt_alt,grp:lwin_toggle" -layout us,br -variant altgr-intl
