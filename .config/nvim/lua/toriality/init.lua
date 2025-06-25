@@ -23,16 +23,34 @@ autocmd('TextYankPost', {
     end,
 })
 
--- Godot LSP configuration
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "gdscript",
-  callback = function()
-    vim.lsp.start({
-      name = "godot",
-      cmd = { "nc", "localhost", "6005" }, -- Connect to Godot's LSP server
-      root_dir = vim.fs.dirname(vim.fs.find({ "project.godot" }, { upward = true })[1]),
-    })
-  end,
+autocmd("FileType", {
+    pattern = "c",
+    callback = function()
+        vim.keymap.set('n', '<leader><leader>', function()
+            local filename = vim.fn.expand("%:t:r")
+            vim.cmd("w")
+            local cmd = "terminal gcc % -o %< && ./" .. filename
+            vim.cmd(cmd)
+        end)
+    end
+})
+
+autocmd("FileType", {
+    pattern = "lua",
+    callback = function()
+        vim.keymap.set('n', '<leader><leader>', ':so<CR>', { buffer = true })
+    end
+})
+
+autocmd("FileType", {
+    pattern = "gdscript",
+    callback = function()
+        vim.lsp.start({
+            name = "godot",
+            cmd = { "nc", "localhost", "6005" }, -- Connect to Godot's LSP server
+            root_dir = vim.fs.dirname(vim.fs.find({ "project.godot" }, { upward = true })[1]),
+        })
+    end,
 })
 
 autocmd({ "BufWritePre" }, {
