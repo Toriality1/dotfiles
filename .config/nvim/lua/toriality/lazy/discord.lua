@@ -1,10 +1,9 @@
 return {
-    'andweeb/presence.nvim',
-    config = function ()
-        require("presence").setup({
-            neovim_image_text = "Better than VSCode"
-        })
-    end
+    'vyfor/cord.nvim',
+    build = ':Cord update',
+    opts = {
+        text = {
+            workspace = ''
+        }
+    }
 }
-
-

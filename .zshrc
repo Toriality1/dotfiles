@@ -119,3 +119,7 @@ source $ZSH/oh-my-zsh.sh
 
 # Created by `pipx` on 2025-06-23 03:51:22
 export PATH="$PATH:/home/pedro/.local/bin"
+. "/home/pedro/.deno/env"
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
