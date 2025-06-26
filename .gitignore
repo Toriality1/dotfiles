@@ -3,9 +3,7 @@
 
 # But not config files
 !.gitignore
-!.zshrc
 !.bashrc
-!.bash_profile
 !.config/
 !.config/nvim/
 !.config/nvim/**
@@ -13,4 +11,8 @@
 !.config/i3/**
 !.config/i3status/
 !.config/i3status/**
-!.tmux.conf
+!.config/tmux/
+!.config/tmux/tmux.conf
+!.config/zsh/
+!.config/zsh/.zshrc
+
