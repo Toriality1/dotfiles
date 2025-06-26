@@ -116,3 +116,4 @@ if ! shopt -oq posix; then
   fi
 fi
 . "/home/pedro/.deno/env"
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
