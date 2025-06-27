@@ -1,0 +1,8 @@
+live_config_reload = true
+
+[env]
+WINIT_X11_SCALE_FACTOR = "2.0"
+
+[mouse]
+hide_when_typing=true
+

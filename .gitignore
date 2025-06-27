@@ -6,6 +6,8 @@
 !.bashrc
 !.zshenv
 !.config/
+!.config/alacritty
+!.config/alacritty/alacritty.toml
 !.config/nvim/
 !.config/nvim/**
 !.config/i3/
