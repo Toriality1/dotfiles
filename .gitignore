@@ -3,6 +3,7 @@
 
 # But not config files
 !.gitignore
+!.install.sh
 !.bashrc
 !.zshenv
 !.config/
