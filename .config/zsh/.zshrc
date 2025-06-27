@@ -1,5 +1,5 @@
 export XDG_DATA_HOME="$HOME/.local/share"
-export OMZ="${XDG_DATA_HOME}/.oh-my-zsh"
+export ZSH="${XDG_DATA_HOME}/.oh-my-zsh"
 export ZDOTDIR="$HOME/.config/zsh"
 export HISTFILE="${ZDOTDIR}/.zsh_history"
 
@@ -12,7 +12,7 @@ plugins=(
     zsh-syntax-highlighting
 )
 
-source $OMZ/oh-my-zsh.sh
+source $ZSH/oh-my-zsh.sh
 
 # fnm
 FNM_PATH="/home/pedro/.local/share/fnm"
