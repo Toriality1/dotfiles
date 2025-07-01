@@ -69,6 +69,22 @@ sudo apt install -y git
 log "Installing ripgrep..."
 sudo apt install -y ripgrep
 
+# Install xprop
+log "Installing xprop..."
+sudo apt install -y xprop
+
+# Install xdotool
+log "Installing xdotool..."
+sudo apt install -y xdotool
+
+# Install xclip
+log "Installing xclip..."
+sudo apt install -y xclip
+
+# Install unzip
+log "Installing unzip..."
+sudo apt install -y unzip
+
 # Installing imagemagick
 log "Installing imagemagick..."
 sudo apt install -y imagemagick
