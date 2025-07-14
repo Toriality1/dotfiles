@@ -12,6 +12,7 @@ plugins=(
     web-search
     zsh-autosuggestions
     zsh-syntax-highlighting
+    fzf
 )
 
 ZSH_WEB_SEARCH_ENGINES=(
@@ -22,6 +23,7 @@ ZSH_WEB_SEARCH_ENGINES=(
     phind "https://phind.com/"
     grok "https://grok.com/?q="
     aistudio "https://aistudio.google.com/prompts/new_chat"
+    meta "https://meta.ai/"
 )
 
 source $ZSH/oh-my-zsh.sh

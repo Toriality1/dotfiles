@@ -69,10 +69,6 @@ sudo apt install -y git
 log "Installing ripgrep..."
 sudo apt install -y ripgrep
 
-# Install xprop
-log "Installing xprop..."
-sudo apt install -y xprop
-
 # Install xdotool
 log "Installing xdotool..."
 sudo apt install -y xdotool

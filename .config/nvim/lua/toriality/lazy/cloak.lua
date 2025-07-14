@@ -22,5 +22,7 @@ return {
                 },
             },
         })
+
+        vim.keymap.set("n", "<leader>cc", function() require("cloak").toggle() end)
     end
 }

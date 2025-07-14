@@ -10,3 +10,5 @@ WINIT_X11_SCALE_FACTOR = "2.0"
 [mouse]
 hide_when_typing=true
 
+[font]
+normal = { family = "FiraCode Nerd Font", style="Regular" }

@@ -32,3 +32,9 @@ vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz")
 vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 
 vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
+
+vim.keymap.set('n', '<leader>td', function()
+    local root = vim.fn.getcwd()
+    local todo = root .. '/todo.md'
+    vim.cmd.edit(todo)
+end, { desc = 'Open or create a todo.md file in project root' })
