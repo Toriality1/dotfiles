@@ -14,6 +14,8 @@ return {
     },
 
     config = function()
+        vim.lsp.enable('laravel_ls')
+
         local cmp = require('cmp')
         local cmp_lsp = require("cmp_nvim_lsp")
         local capabilities = vim.tbl_deep_extend(
@@ -69,8 +71,8 @@ return {
                 ['<C-n>'] = cmp.mapping.select_next_item(cmp_select),
                 ['<C-Space>'] = cmp.mapping.confirm({ select = true }),
                 ["<C-y>"] = cmp.mapping.complete(),
-
             }),
+
             sources = cmp.config.sources({
                 { name = "codeium" },
                 { name = 'nvim_lsp' },

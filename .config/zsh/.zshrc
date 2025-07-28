@@ -5,6 +5,7 @@ export HISTFILE="${ZDOTDIR}/.zsh_history"
 
 alias vim="nvim"
 alias sudoku="sudo apt update && sudo apt upgrade && sudo apt autoremove"
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
 
 ZSH_THEME="robbyrussell"
 
@@ -34,4 +35,6 @@ if [ -d "$FNM_PATH" ]; then
   export PATH="/home/pedro/.local/share/fnm:$PATH"
   eval "`fnm env`"
 fi
+
+export PATH="/home/pedro/.config/herd-lite/bin:$PATH"
 
