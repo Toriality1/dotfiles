@@ -10,11 +10,32 @@ return {
         "hrsh7th/nvim-cmp",
         "L3MON4D3/LuaSnip",
         "saadparwaiz1/cmp_luasnip",
-
+        'stevearc/conform.nvim',
     },
 
     config = function()
         vim.lsp.enable('laravel_ls')
+
+        require("conform").setup({
+            formatters_by_ft = {
+                lua = { "stylua" },
+                html = { "prettierd" },
+                css = { "prettierd" },
+                javascript = { "prettierd" },
+                javascriptreact = { "prettierd" },
+                typescript = { "prettierd" },
+                typescriptreact = { "prettierd" },
+                markdown = { "prettierd" },
+                json = { "prettierd" },
+                yaml = { "prettierd" },
+                graphql = { "prettierd" },
+            },
+        })
+
+        vim.keymap.set({ "n", "v" }, "<leader>f", function()
+            require("conform").format({ async = true, lsp_fallback = true })
+        end, { desc = "Format file or range" })
+
 
         local cmp = require('cmp')
         local cmp_lsp = require("cmp_nvim_lsp")

@@ -25,6 +25,8 @@ ZSH_WEB_SEARCH_ENGINES=(
     grok "https://grok.com/?q="
     aistudio "https://aistudio.google.com/prompts/new_chat"
     meta "https://meta.ai/"
+    zai "https://z.ai/?q="
+    kimi "https://www.kimi.com/"
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -38,3 +40,6 @@ fi
 
 export PATH="/home/pedro/.config/herd-lite/bin:$PATH"
 
+
+# Created by `pipx` on 2025-09-11 16:12:26
+export PATH="$PATH:/home/pedro/.local/bin"
