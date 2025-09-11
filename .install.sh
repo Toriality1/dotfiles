@@ -61,6 +61,10 @@ if [ "$SKIP_UPDATE" != true ]; then
     sudo apt update && sudo apt upgrade -y
 fi
 
+# Install curl becase it's not installed by default on Debian
+log "Installing curl..."
+sudo apt install -y curl
+
 # Install git
 log "Installing git..."
 sudo apt install -y git
