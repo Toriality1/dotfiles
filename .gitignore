@@ -19,4 +19,4 @@
 !.config/tmux/tmux.conf
 !.config/zsh/
 !.config/zsh/.zshrc
-
+!todo.md
