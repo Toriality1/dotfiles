@@ -2,6 +2,7 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export ZSH="${XDG_DATA_HOME}/.oh-my-zsh"
 export ZDOTDIR="$HOME/.config/zsh"
 export HISTFILE="${ZDOTDIR}/.zsh_history"
+export TMUXP_CONFIGDIR="$HOME/.config/tmuxp/"
 
 alias vim="nvim"
 alias sudoku="sudo apt update && sudo apt upgrade && sudo apt autoremove"
