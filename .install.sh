@@ -12,12 +12,25 @@ NC='\033[0m' # No Color
 CONFIG="$HOME/.config"
 DOTFILES="/tmp/dotfiles"
 
-# if --dont-update is passed as an argument, skip the update step
-if [ "$1" == "--dont-update" ]; then
-    SKIP_UPDATE=true
-else
-    SKIP_UPDATE=false
-fi
+# Default flags
+SKIP_UPDATE=false
+SERVER_MODE=false
+
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --dont-update)
+            SKIP_UPDATE=true
+            shift
+            ;;
+        --server)
+            SERVER_MODE=true
+            shift
+            ;;
+        *)
+            ;;
+    esac
+done
 
 # Logging function
 log() {
@@ -53,7 +66,12 @@ if ! sudo -v; then
     error "This script requires sudo access"
 fi
 
-log "Starting Linux setup automation..."
+if [ "$SERVER_MODE" = true ]; then
+    log "Starting Linux SERVER setup automation..."
+    info "Server mode enabled - skipping GUI components"
+else
+    log "Starting Linux setup automation..."
+fi
 
 # Update and upgrade system
 if [ "$SKIP_UPDATE" != true ]; then
@@ -61,7 +79,7 @@ if [ "$SKIP_UPDATE" != true ]; then
     sudo apt update && sudo apt upgrade -y
 fi
 
-# Install curl becase it's not installed by default on Debian
+# Install curl because it's not installed by default on Debian
 log "Installing curl..."
 sudo apt install -y curl
 
@@ -73,21 +91,24 @@ sudo apt install -y git
 log "Installing ripgrep..."
 sudo apt install -y ripgrep
 
-# Install xdotool
-log "Installing xdotool..."
-sudo apt install -y xdotool
+# Install GUI tools only if not in server mode
+if [ "$SERVER_MODE" != true ]; then
+    # Install xdotool
+    log "Installing xdotool..."
+    sudo apt install -y xdotool
 
-# Install xclip
-log "Installing xclip..."
-sudo apt install -y xclip
+    # Install xclip
+    log "Installing xclip..."
+    sudo apt install -y xclip
+
+    # Installing imagemagick
+    log "Installing imagemagick..."
+    sudo apt install -y imagemagick
+fi
 
 # Install unzip
 log "Installing unzip..."
 sudo apt install -y unzip
-
-# Installing imagemagick
-log "Installing imagemagick..."
-sudo apt install -y imagemagick
 
 # Installing build-essential
 log "Installing build-essential..."
@@ -100,19 +121,22 @@ if [ -d "$DOTFILES" ]; then
 fi
 git clone "https://github.com/Toriality1/dotfiles.git" "$DOTFILES"
 
-# Install i3wm
-log "Installing i3wm..."
-sudo apt install -y i3 i3status i3lock dmenu
+# Install GUI components only if not in server mode
+if [ "$SERVER_MODE" != true ]; then
+    # Install i3wm
+    log "Installing i3wm..."
+    sudo apt install -y i3 i3status i3lock dmenu
 
-# Set up i3wm configuration
-log "Setting up i3wm configuration..."
-if [ -d "$CONFIG/i3" ]; then
-    cp -r "$DOTFILES/.config/i3" "$CONFIG"
-else
-    mkdir -p "$CONFIG/i3"
-    cp -r "$DOTFILES/.config/i3" "$CONFIG"
+    # Set up i3wm configuration
+    log "Setting up i3wm configuration..."
+    if [ -d "$CONFIG/i3" ]; then
+        cp -r "$DOTFILES/.config/i3" "$CONFIG"
+    else
+        mkdir -p "$CONFIG/i3"
+        cp -r "$DOTFILES/.config/i3" "$CONFIG"
+    fi
+    log "i3wm set up successfully"
 fi
-log "i3wm set up successfully"
 
 # Install Neovim from GitHub releases
 log "Installing Neovim v0.11.2 from GitHub..."
@@ -135,19 +159,22 @@ else
 fi
 log "Neovim v0.11.2 set up successfully"
 
-# Install Alacritty
-log "Installing Alacritty..."
-sudo apt install -y alacritty
+# Install Alacritty only if not in server mode
+if [ "$SERVER_MODE" != true ]; then
+    # Install Alacritty
+    log "Installing Alacritty..."
+    sudo apt install -y alacritty
 
-# Set up Alacritty configuration
-log "Setting up Alacritty configuration..."
-if [ -d "$CONFIG/alacritty" ]; then
-    cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
-else
-    mkdir -p "$CONFIG/alacritty"
-    cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
+    # Set up Alacritty configuration
+    log "Setting up Alacritty configuration..."
+    if [ -d "$CONFIG/alacritty" ]; then
+        cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
+    else
+        mkdir -p "$CONFIG/alacritty"
+        cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
+    fi
+    log "Alacritty set up successfully"
 fi
-log "Alacritty set up successfully"
 
 # Install zsh
 log "Installing zsh..."
@@ -215,10 +242,13 @@ fi
 git clone https://github.com/tmux-plugins/tpm "$CONFIG/tmux/plugins/tpm"
 log "tpm installed successfully"
 
-# Install zathura
-log "Installing zathura..."
-sudo apt install -y zathura
-log "zathura installed successfully"
+# Install zathura only if not in server mode
+if [ "$SERVER_MODE" != true ]; then
+    # Install zathura
+    log "Installing zathura..."
+    sudo apt install -y zathura
+    log "zathura installed successfully"
+fi
 
 # Install node and npm
 log "Installing NodeJS v22.17.0 LTS and pnpm via fnm..."
@@ -239,9 +269,10 @@ sudo apt install -y python3
 log "python3 installed successfully"
 
 # Install docker
+log "Installing Docker..."
 # Add Docker's official GPG key:
 sudo apt-get update
-sudo apt-get install ca-certificates curl
+sudo apt-get install -y ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -252,8 +283,17 @@ echo \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+log "Docker installed successfully"
+
+log "Adding user to docker group..."
+sudo usermod -aG docker $USER
+warning "Please log out and log back in for docker group change to take effect"
 
 # End
-log "Setup complete! It's recommended to reboot your system."
+if [ "$SERVER_MODE" = true ]; then
+    log "Server setup complete! It's recommended to reboot your system."
+else
+    log "Setup complete! It's recommended to reboot your system."
+fi
 cleanup
