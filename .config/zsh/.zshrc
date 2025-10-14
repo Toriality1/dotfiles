@@ -15,19 +15,6 @@ plugins=(
     zsh-syntax-highlighting
 )
 
-ZSH_WEB_SEARCH_ENGINES=(
-    deepseek "https://chat.deepseek.com/"
-    gemini "https://gemini.google.com/app"
-    claude "https://claude.ai/new?q="
-    copilot "https://copilot.microsoft.com/?q="
-    phind "https://phind.com/"
-    grok "https://grok.com/?q="
-    aistudio "https://aistudio.google.com/prompts/new_chat"
-    meta "https://meta.ai/"
-    zai "https://z.ai/?q="
-    kimi "https://www.kimi.com/"
-)
-
 source $ZSH/oh-my-zsh.sh
 
 # fnm
