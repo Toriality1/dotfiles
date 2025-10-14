@@ -25,6 +25,7 @@ return {
                 javascriptreact = { "prettierd" },
                 typescript = { "prettierd" },
                 typescriptreact = { "prettierd" },
+                astro = { "prettierd" },
                 markdown = { "prettierd" },
                 json = { "prettierd" },
                 yaml = { "prettierd" },

@@ -91,6 +91,14 @@ sudo apt install -y git
 log "Installing ripgrep..."
 sudo apt install -y ripgrep
 
+# Install wget
+log "Installing wget..."
+sudo apt install -y wget
+
+# Install fuse
+log "Installing fuse..."
+sudo apt install -y fuse
+
 # Install GUI tools only if not in server mode
 if [ "$SERVER_MODE" != true ]; then
     # Install xdotool
@@ -104,6 +112,9 @@ if [ "$SERVER_MODE" != true ]; then
     # Installing imagemagick
     log "Installing imagemagick..."
     sudo apt install -y imagemagick
+
+    # Installing flameshot
+    sudo apt install -y flameshot
 fi
 
 # Install unzip
@@ -233,14 +244,6 @@ else
     cp -r "$DOTFILES/.config/tmux" "$CONFIG"
 fi
 log "tmux set up successfully"
-
-# Install tpm
-log "Installing tpm..."
-if [ -d "$CONFIG/tmux/plugins/tpm" ]; then
-    rm -rf "$CONFIG/tmux/plugins/tpm"
-fi
-git clone https://github.com/tmux-plugins/tpm "$CONFIG/tmux/plugins/tpm"
-log "tpm installed successfully"
 
 # Install zathura only if not in server mode
 if [ "$SERVER_MODE" != true ]; then
