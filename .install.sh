@@ -115,6 +115,12 @@ if [ "$SERVER_MODE" != true ]; then
 
     # Installing flameshot
     sudo apt install -y flameshot
+
+    # Install rofi
+    sudo apt install -y rofi
+
+    # Install chromium
+    sudo apt install -y chromium
 fi
 
 # Install unzip
