@@ -114,13 +114,24 @@ if [ "$SERVER_MODE" != true ]; then
     sudo apt install -y imagemagick
 
     # Installing flameshot
+    log "Installing flameshot..."
     sudo apt install -y flameshot
 
     # Install rofi
+    log "Installing rofi..."
     sudo apt install -y rofi
 
     # Install chromium
+    log "Installing chromium..."
     sudo apt install -y chromium
+
+    # Install feh
+    log "Installing feh..."
+    sudo apt install -y feh
+
+    # Install picom
+    log "Installing picom..."
+    sudo apt install -y picom
 fi
 
 # Install unzip
@@ -285,6 +296,8 @@ log "NodeJS and pnpm installed successfully"
 # Install python3
 log "Installing python3..."
 sudo apt install -y python3
+sudo apt install -y python3-venv
+sudo apt install -y python3-pip
 log "python3 installed successfully"
 
 # Install docker

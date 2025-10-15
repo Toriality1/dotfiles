@@ -9,6 +9,10 @@
 !.config/
 !.config/alacritty
 !.config/alacritty/alacritty.toml
+!.config/picom
+!.config/picom/picom.conf
+!.config/rofi
+!.config/rofi/config.rasi
 !.config/nvim/
 !.config/nvim/**
 !.config/i3/
