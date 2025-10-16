@@ -132,6 +132,10 @@ if [ "$SERVER_MODE" != true ]; then
     # Install picom
     log "Installing picom..."
     sudo apt install -y picom
+
+    # Install btop
+    log "Installing btop..."
+    sudo apt install -y btop
 fi
 
 # Install unzip
