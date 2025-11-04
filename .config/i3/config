@@ -121,12 +121,6 @@ bindsym Print exec flameshot gui
 
 bindsym $mod+Shift+Escape exec --no-startup-id i3lock
 
-bindsym $mod+Shift+i exec --no-startup-id feh --bg-scale $(find ~/.config/i3/images/ -type f | shuf -n1)
-
-exec_always --no-startup-id picom -b -f
-
-
-
 bar {
     colors {
         background #000000
