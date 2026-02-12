@@ -1,40 +1,71 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
 
-# Colors for output
+###############################################################################
+# WSL2 DEVELOPMENT ENVIRONMENT BOOTSTRAP SCRIPT
+#
+# This script sets up a clean CLI-focused development environment for WSL2.
+#
+# Designed for:
+#   - Debian WSL2
+#   - Non-root user
+#   - Re-runnable (mostly idempotent)
+#
+###############################################################################
+
+set -e  # Exit immediately if a command exits with non-zero status
+
+###############################################################################
+# COLORS (for readable output)
+###############################################################################
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Folders
+###############################################################################
+# PATHS
+###############################################################################
+
 CONFIG="$HOME/.config"
-DOTFILES="/tmp/dotfiles"
+DOTFILES_DIR="/tmp/dotfiles-bootstrap"
 
-# Default flags
+###############################################################################
+# ARGUMENT PARSING
+#
+# Only one optional flag:
+#   --dont-update   -> Skip apt update/upgrade
+###############################################################################
+
 SKIP_UPDATE=false
-SERVER_MODE=false
 
-# Parse arguments
-for arg in "$@"; do
-    case $arg in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --dont-update)
             SKIP_UPDATE=true
             shift
             ;;
-        --server)
-            SERVER_MODE=true
-            shift
-            ;;
         *)
+            shift
             ;;
     esac
 done
 
-# Logging function
+###############################################################################
+# LOGGING HELPERS
+###############################################################################
+
 log() {
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+}
+
+info() {
+    echo -e "${BLUE}[INFO] $1${NC}"
+}
+
+warning() {
+    echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
 error() {
@@ -42,283 +73,200 @@ error() {
     exit 1
 }
 
-warning() {
-    echo -e "${YELLOW}[WARNING] $1${NC}"
-}
-
-info() {
-    echo -e "${BLUE}[INFO] $1${NC}"
-}
+###############################################################################
+# CLEANUP HANDLER
+#
+# This ensures /tmp clone is removed even if the script exits early.
+###############################################################################
 
 cleanup() {
-    log "Cleaning up..."
-    rm -rf "$DOTFILES"
-    exit
+    rm -rf "$DOTFILES_DIR"
 }
 
-# Check if running as root
+trap cleanup EXIT
+
+###############################################################################
+# SAFETY CHECKS
+###############################################################################
+
+# Do NOT allow running as root.
 if [[ $EUID -eq 0 ]]; then
-   error "Don't run this script as root!"
+    error "Do not run this script as root."
 fi
 
-# Check if we have sudo access
+# Ensure sudo works before proceeding.
 if ! sudo -v; then
-    error "This script requires sudo access"
+    error "This script requires sudo access."
 fi
 
-if [ "$SERVER_MODE" = true ]; then
-    log "Starting Linux SERVER setup automation..."
-    info "Server mode enabled - skipping GUI components"
-else
-    log "Starting Linux setup automation..."
-fi
+log "Starting WSL2 CLI development environment setup..."
 
-# Update and upgrade system
+###############################################################################
+# SYSTEM UPDATE
+###############################################################################
+
 if [ "$SKIP_UPDATE" != true ]; then
-    log "Updating and upgrading system packages..."
-    sudo apt update && sudo apt upgrade -y
+    log "Updating system packages..."
+    sudo apt update
+    sudo apt upgrade -y
 fi
 
-# Install curl because it's not installed by default on Debian
-log "Installing curl..."
-sudo apt install -y curl
+###############################################################################
+# BASE CLI PACKAGES
+###############################################################################
 
-# Install git
-log "Installing git..."
-sudo apt install -y git
+log "Installing base CLI development packages..."
 
-# Install ripgrep
-log "Installing ripgrep..."
-sudo apt install -y ripgrep
+sudo apt install -y \
+    build-essential \
+    curl \
+    git \
+    ripgrep \
+    wget \
+    unzip \
+    fuse \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    tmux \
+    zsh \
+    python3 \
+    python3-venv \
+    python3-pip
 
-# Install wget
-log "Installing wget..."
-sudo apt install -y wget
+log "Base packages installed."
 
-# Install fuse
-log "Installing fuse..."
-sudo apt install -y fuse
+###############################################################################
+# DOTFILES
+#
+# We clone into /tmp and then copy contents safely.
+# Using '/.' ensures we copy contents and not nest directories.
+###############################################################################
 
-# Install GUI tools only if not in server mode
-if [ "$SERVER_MODE" != true ]; then
-    # Install xdotool
-    log "Installing xdotool..."
-    sudo apt install -y xdotool
-
-    # Install xclip
-    log "Installing xclip..."
-    sudo apt install -y xclip
-
-    # Installing imagemagick
-    log "Installing imagemagick..."
-    sudo apt install -y imagemagick
-
-    # Installing flameshot
-    log "Installing flameshot..."
-    sudo apt install -y flameshot
-
-    # Install rofi
-    log "Installing rofi..."
-    sudo apt install -y rofi
-
-    # Install chromium
-    log "Installing chromium..."
-    sudo apt install -y chromium
-
-    # Install feh
-    log "Installing feh..."
-    sudo apt install -y feh
-
-    # Install picom
-    log "Installing picom..."
-    sudo apt install -y picom
-
-    # Install btop
-    log "Installing btop..."
-    sudo apt install -y btop
-fi
-
-# Install unzip
-log "Installing unzip..."
-sudo apt install -y unzip
-
-# Installing build-essential
-log "Installing build-essential..."
-sudo apt install -y build-essential
-
-# Get my dotfiles!
 log "Cloning dotfiles..."
-if [ -d "$DOTFILES" ]; then
-    rm -rf "$DOTFILES"
+
+rm -rf "$DOTFILES_DIR"
+git clone https://github.com/Toriality1/dotfiles.git "$DOTFILES_DIR"
+
+###############################################################################
+# NEOVIM (AppImage install)
+#
+# Installing 0.11.2 version directly from GitHub.
+# Placing in /usr/local/bin
+###############################################################################
+
+if ! nvim --version 2>/dev/null | grep -q "0.11.2"; then
+  log "Installing Neovim v0.11.2..."
+
+  NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.appimage"
+
+  wget -q -O /tmp/nvim.appimage "$NVIM_URL"
+  chmod +x /tmp/nvim.appimage
+  sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
+
+  log "Neovim installed."
 fi
-git clone "https://github.com/Toriality1/dotfiles.git" "$DOTFILES"
 
-# Install GUI components only if not in server mode
-if [ "$SERVER_MODE" != true ]; then
-    # Install i3wm
-    log "Installing i3wm..."
-    sudo apt install -y i3 i3status i3lock dmenu
+###############################################################################
+# NEOVIM CONFIG
+###############################################################################
 
-    # Set up i3wm configuration
-    log "Setting up i3wm configuration..."
-    if [ -d "$CONFIG/i3" ]; then
-        cp -r "$DOTFILES/.config/i3" "$CONFIG"
-    else
-        mkdir -p "$CONFIG/i3"
-        cp -r "$DOTFILES/.config/i3" "$CONFIG"
-    fi
-    log "i3wm set up successfully"
-fi
-
-# Install Neovim from GitHub releases
-log "Installing Neovim v0.11.2 from GitHub..."
-NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.appimage"
-cd /tmp
-wget -O nvim.appimage "$NVIM_URL"
-chmod +x nvim.appimage
-if [ -f /usr/bin/nvim ]; then
-    sudo rm /usr/bin/nvim
-fi
-sudo mv nvim.appimage /usr/bin/nvim
-
-# Set up Neovim configuration
 log "Setting up Neovim configuration..."
-if [ -d "$CONFIG/nvim" ]; then
-    cp -r "$DOTFILES/.config/nvim" "$CONFIG"
-else
-    mkdir -p "$CONFIG/nvim"
-    cp -r "$DOTFILES/.config/nvim" "$CONFIG"
-fi
-log "Neovim v0.11.2 set up successfully"
 
-# Install Alacritty only if not in server mode if [ "$SERVER_MODE" != true ]; then
-    # Install Alacritty
-    log "Installing Alacritty..."
-    sudo apt install -y alacritty
+mkdir -p "$CONFIG/nvim"
+cp -r "$DOTFILES_DIR/.config/nvim/." "$CONFIG/nvim/"
 
-    # Set up Alacritty configuration
-    log "Setting up Alacritty configuration..."
-    if [ -d "$CONFIG/alacritty" ]; then
-        cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
-    else
-        mkdir -p "$CONFIG/alacritty"
-        cp -r "$DOTFILES/.config/alacritty" "$CONFIG"
-    fi
-    log "Alacritty set up successfully"
-fi
+###############################################################################
+# ZSH CONFIG
+###############################################################################
 
-# Install zsh
-log "Installing zsh..."
-sudo apt install -y zsh
+log "Setting up Zsh..."
 
-# Set up zsh configuration
-log "Setting up zsh configuration..."
-cp "$DOTFILES/.zshenv" "$HOME/.zshenv"
-if [ -d "$CONFIG/zsh" ]; then
-    cp -r "$DOTFILES/.config/zsh" "$CONFIG"
-else
-    mkdir -p "$CONFIG/zsh"
-    cp -r "$DOTFILES/.config/zsh" "$CONFIG"
-fi
-log "zsh set up successfully"
+cp "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
 
-# Install oh-my-zsh
-log "Installing oh-my-zsh..."
-if [ ! -d "$HOME/.local/share/.oh-my-zsh" ]; then
-    ZDOTDIR="$HOME/.config/zsh" ZSH="$HOME/.local/share/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
-else
-    rm -rf "$HOME/.local/share/.oh-my-zsh"
-    ZDOTDIR="$HOME/.config/zsh" ZSH="$HOME/.local/share/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
-fi
-log "oh-my-zsh installed successfully"
+mkdir -p "$CONFIG/zsh"
+cp -r "$DOTFILES_DIR/.config/zsh/." "$CONFIG/zsh/"
 
-# Install oh-my-zsh plugins
-log "Installing oh-my-zsh plugins..."
-if [ ! -d "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
-fi
-if [ ! -d "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-fi
-log "oh-my-zsh plugins installed successfully"
+###############################################################################
+# OH-MY-ZSH
+###############################################################################
 
-# Set zsh as default shell
-log "Setting zsh as default shell..."
-if [ "$SHELL" != "/usr/bin/zsh" ] && [ "$SHELL" != "/bin/zsh" ]; then
-    chsh -s $(which zsh)
-    warning "Please log out and log back in for shell change to take effect"
-else
-    log "zsh is already the default shell"
+log "Installing Oh My Zsh..."
+
+rm -rf "$HOME/.local/share/.oh-my-zsh"
+
+ZDOTDIR="$CONFIG/zsh" \
+ZSH="$HOME/.local/share/.oh-my-zsh" \
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" \
+--unattended --keep-zshrc
+
+###############################################################################
+# ZSH PLUGINS
+###############################################################################
+
+log "Installing Zsh plugins..."
+
+git clone https://github.com/zsh-users/zsh-autosuggestions \
+    "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-autosuggestions" || true
+
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
+    "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" || true
+
+###############################################################################
+# SET ZSH AS DEFAULT SHELL
+###############################################################################
+
+if [[ "$SHELL" != "$(which zsh)" ]]; then
+    chsh -s "$(which zsh)"
+    warning "Log out and back in for Zsh to become default."
 fi
 
-# Install tmux
-log "Installing tmux..."
-sudo apt install -y tmux
+###############################################################################
+# TMUX CONFIG
+###############################################################################
 
-# Set up tmux configuration
-log "Setting up tmux configuration..."
-if [ -d "$CONFIG/tmux" ]; then
-    cp -r "$DOTFILES/.config/tmux" "$CONFIG"
-else
-    mkdir -p "$CONFIG/tmux"
-    cp -r "$DOTFILES/.config/tmux" "$CONFIG"
+log "Setting up tmux..."
+
+mkdir -p "$CONFIG/tmux"
+cp -r "$DOTFILES_DIR/.config/tmux/." "$CONFIG/tmux/"
+
+###############################################################################
+# NODE (via FNM)
+#
+# We install FNM without modifying shell automatically.
+# Then manually load environment.
+###############################################################################
+
+# Install fnm only if not already installed
+if [ ! -d "$HOME/.local/share/fnm" ]; then
+  log "Installing Node.js LTS via fnm..."
+
+  curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
 fi
-log "tmux set up successfully"
 
-# Install zathura only if not in server mode
-if [ "$SERVER_MODE" != true ]; then
-    # Install zathura
-    log "Installing zathura..."
-    sudo apt install -y zathura
-    log "zathura installed successfully"
-fi
-
-# Install node and npm
-log "Installing NodeJS v22.17.0 LTS and pnpm via fnm..."
-curl -o- https://fnm.vercel.app/install | bash -s -- --skip-shell
+# Ensure fnm is available in THIS script session
 export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env | sed 's/rehash/hash -r/g')"
-fnm install 22
-fnm use 22
-corepack enable pnpm
-corepack prepare pnpm
-echo "Node version: $(node -v)"
-echo "pnpm version: $(pnpm -v)"
-log "NodeJS and pnpm installed successfully"
+eval "$(fnm env)"
 
-# Install python3
-log "Installing python3..."
-sudo apt install -y python3
-sudo apt install -y python3-venv
-sudo apt install -y python3-pip
-log "python3 installed successfully"
-
-# Install docker
-log "Installing Docker..."
-# Add Docker's official GPG key:
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-log "Docker installed successfully"
-
-log "Adding user to docker group..."
-sudo usermod -aG docker $USER
-warning "Please log out and log back in for docker group change to take effect"
-
-# End
-if [ "$SERVER_MODE" = true ]; then
-    log "Server setup complete! It's recommended to reboot your system."
-else
-    log "Setup complete! It's recommended to reboot your system."
+# Ensure Node 22 is installed
+if ! fnm list | grep -q "v22\."; then
+  log "Installing Node 22..."
+  fnm install 22
 fi
-cleanup
+
+fnm use 22
+
+corepack enable
+corepack prepare pnpm@latest --activate
+
+info "Node version: $(node -v)"
+info "pnpm version: $(pnpm -v)"
+
+###############################################################################
+# FINISHED
+###############################################################################
+
+log "WSL2 CLI environment setup complete."
+log "It is recommended to restart WSL:"
+echo "  wsl --shutdown"
+
