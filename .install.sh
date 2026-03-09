@@ -1,27 +1,28 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# WSL2 DEVELOPMENT ENVIRONMENT BOOTSTRAP SCRIPT
+# DEBIAN DEVELOPMENT ENVIRONMENT BOOTSTRAP SCRIPT
 #
-# This script sets up a clean CLI-focused development environment for WSL2.
+# This script sets up a clean CLI-focused development environment for Debian.
 #
 # Designed for:
-#   - Debian WSL2
+#   - Debian (bare metal, VM, or WSL2)
 #   - Non-root user
 #   - Re-runnable (mostly idempotent)
 #
 ###############################################################################
 
-set -e  # Exit immediately if a command exits with non-zero status
+set -e
 
 ###############################################################################
-# COLORS (for readable output)
+# COLORS
 ###############################################################################
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 ###############################################################################
@@ -34,7 +35,6 @@ DOTFILES_DIR="/tmp/dotfiles-bootstrap"
 ###############################################################################
 # ARGUMENT PARSING
 #
-# Only one optional flag:
 #   --dont-update   -> Skip apt update/upgrade
 ###############################################################################
 
@@ -74,9 +74,48 @@ error() {
 }
 
 ###############################################################################
-# CLEANUP HANDLER
+# INTERACTIVE PROMPT HELPER
 #
-# This ensures /tmp clone is removed even if the script exits early.
+# Usage: ask_yes_no "Question text" [y|n]
+# Returns 0 (yes) or 1 (no)
+###############################################################################
+
+ask_yes_no() {
+    local question="$1"
+    local default="${2:-y}"
+
+    while true; do
+        if [[ "$default" == "y" ]]; then
+            echo -en "${CYAN}[?] $question [Y/n]: ${NC}"
+        else
+            echo -en "${CYAN}[?] $question [y/N]: ${NC}"
+        fi
+
+        read -r answer
+        answer="${answer:-$default}"
+
+        case "$answer" in
+            [Yy]* ) return 0 ;;
+            [Nn]* ) return 1 ;;
+            * ) echo "Please answer yes or no." ;;
+        esac
+    done
+}
+
+###############################################################################
+# SECTION HEADER HELPER
+###############################################################################
+
+section() {
+    echo ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}  $1${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+}
+
+###############################################################################
+# CLEANUP HANDLER
 ###############################################################################
 
 cleanup() {
@@ -89,39 +128,93 @@ trap cleanup EXIT
 # SAFETY CHECKS
 ###############################################################################
 
-# Do NOT allow running as root.
 if [[ $EUID -eq 0 ]]; then
     error "Do not run this script as root."
 fi
 
-# Ensure sudo works before proceeding.
 if ! sudo -v; then
     error "This script requires sudo access."
 fi
 
-log "Starting WSL2 CLI development environment setup..."
+###############################################################################
+# UP-FRONT PROMPTS
+#
+# Collect all user choices before any installation begins, so the script can
+# run unattended after this point.
+###############################################################################
+
+section "Setup Preferences"
+echo -e "${BLUE}Answer a few questions before we begin. All installs will then run unattended.${NC}"
+echo ""
+
+# --- GitHub ---
+ask_yes_no "Log in to GitHub with gh right now?" \
+    && DO_GH_LOGIN=true || DO_GH_LOGIN=false
+
+# --- Desktop GUI apps ---
+# Only useful in a full desktop environment (bare metal / VM with GUI).
+# Useless in WSL2 (no native GUI) and in headless servers.
+echo ""
+echo -e "${BLUE}The following are desktop/GUI apps — skip them if you're on WSL2 or a headless server.${NC}"
+echo ""
+
+ask_yes_no "Install Alacritty? (GPU terminal — skip on WSL2/server)" "n" \
+    && DO_ALACRITTY=true || DO_ALACRITTY=false
+
+ask_yes_no "Install Chromium? (browser — skip on WSL2/server)" "n" \
+    && DO_CHROMIUM=true || DO_CHROMIUM=false
+
+ask_yes_no "Install VS Code? (GUI editor — skip on WSL2/server; WSL2 users use Windows VS Code + WSL extension)" "n" \
+    && DO_VSCODE=true || DO_VSCODE=false
+
+ask_yes_no "Install Discord? (desktop app — skip on WSL2/server)" "n" \
+    && DO_DISCORD=true || DO_DISCORD=false
+
+ask_yes_no "Install OBS Studio? (screen capture — skip on WSL2/server)" "n" \
+    && DO_OBS=true || DO_OBS=false
+
+ask_yes_no "Install Google Antigravity? (browser extension helper — skip on WSL2/server)" "n" \
+    && DO_ANTIGRAVITY=true || DO_ANTIGRAVITY=false
+
+# --- Server / environment-specific tools ---
+# Docker is great on bare metal and servers. WSL2 users typically use Docker
+# Desktop on the Windows side instead.
+echo ""
+echo -e "${BLUE}The following are server/environment-specific — useful on bare metal/servers, handled differently on WSL2.${NC}"
+echo ""
+
+ask_yes_no "Install Docker? (WSL2 users typically use Docker Desktop on Windows instead)" "n" \
+    && DO_DOCKER=true || DO_DOCKER=false
+
+echo ""
+log "Preferences collected. Starting installation..."
 
 ###############################################################################
 # SYSTEM UPDATE
 ###############################################################################
 
+section "System Update"
+
 if [ "$SKIP_UPDATE" != true ]; then
     log "Updating system packages..."
     sudo apt update
     sudo apt upgrade -y
+else
+    info "Skipping system update (--dont-update)."
 fi
 
 ###############################################################################
 # BASE CLI PACKAGES
+# Always installed — useful in every environment (WSL, server, desktop).
 ###############################################################################
+
+section "Base CLI Packages"
 
 log "Installing base CLI development packages..."
 
 sudo apt install -y \
     build-essential \
     curl \
-    git \
-    ripgrep \
     wget \
     unzip \
     fuse \
@@ -132,77 +225,116 @@ sudo apt install -y \
     zsh \
     python3 \
     python3-venv \
-    python3-pip
+    python3-pip \
+    ripgrep
 
 log "Base packages installed."
 
 ###############################################################################
-# DOTFILES
-#
-# We clone into /tmp and then copy contents safely.
-# Using '/.' ensures we copy contents and not nest directories.
+# GIT & GH CLI
+# Always installed — version control is needed everywhere.
 ###############################################################################
 
-log "Cloning dotfiles..."
+section "Git & GitHub CLI"
 
+log "Installing git..."
+sudo apt install -y git
+
+if ! command -v gh &>/dev/null; then
+    log "Installing GitHub CLI..."
+
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install -y gh
+
+    log "GitHub CLI installed."
+else
+    info "GitHub CLI already installed, skipping."
+fi
+
+###############################################################################
+# GIT GLOBAL CONFIG
+# Always applied — these are universal settings.
+###############################################################################
+
+log "Configuring git globals..."
+
+git config --global user.name "Pedro Crelier"
+git config --global user.email "torialitym@gmail.com"
+git config --global init.defaultBranch main
+
+info "Git user:            Pedro Crelier <torialitym@gmail.com>"
+info "Git default branch:  main"
+
+###############################################################################
+# GITHUB LOGIN
+###############################################################################
+
+if [ "$DO_GH_LOGIN" = true ]; then
+    log "Logging in to GitHub..."
+    gh auth login
+else
+    warning "Skipping GitHub login. Run 'gh auth login' when ready."
+fi
+
+###############################################################################
+# DOTFILES
+###############################################################################
+
+section "Dotfiles"
+
+log "Cloning dotfiles..."
 rm -rf "$DOTFILES_DIR"
 git clone https://github.com/Toriality1/dotfiles.git "$DOTFILES_DIR"
 
 ###############################################################################
 # NEOVIM (AppImage install)
-#
-# Installing 0.11.2 version directly from GitHub.
-# Placing in /usr/local/bin
+# Always installed — a terminal editor is useful in every environment.
 ###############################################################################
+
+section "Neovim"
 
 if ! nvim --version 2>/dev/null | grep -q "0.11.2"; then
-  log "Installing Neovim v0.11.2..."
+    log "Installing Neovim v0.11.2..."
 
-  NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.appimage"
+    NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.appimage"
 
-  wget -q -O /tmp/nvim.appimage "$NVIM_URL"
-  chmod +x /tmp/nvim.appimage
-  sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
+    wget -q -O /tmp/nvim.appimage "$NVIM_URL"
+    chmod +x /tmp/nvim.appimage
+    sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
 
-  log "Neovim installed."
+    log "Neovim installed."
+else
+    info "Neovim v0.11.2 already installed, skipping."
 fi
 
-###############################################################################
-# NEOVIM CONFIG
-###############################################################################
-
-log "Setting up Neovim configuration..."
-
+log "Applying Neovim config..."
 mkdir -p "$CONFIG/nvim"
 cp -r "$DOTFILES_DIR/.config/nvim/." "$CONFIG/nvim/"
 
 ###############################################################################
-# ZSH CONFIG
+# ZSH + OH-MY-ZSH + PLUGINS
+# Always installed — shell config is useful in every environment.
 ###############################################################################
 
-log "Setting up Zsh..."
+section "Zsh & Oh My Zsh"
 
+log "Applying Zsh config..."
 cp "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
-
 mkdir -p "$CONFIG/zsh"
 cp -r "$DOTFILES_DIR/.config/zsh/." "$CONFIG/zsh/"
 
-###############################################################################
-# OH-MY-ZSH
-###############################################################################
-
 log "Installing Oh My Zsh..."
-
 rm -rf "$HOME/.local/share/.oh-my-zsh"
 
 ZDOTDIR="$CONFIG/zsh" \
 ZSH="$HOME/.local/share/.oh-my-zsh" \
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" \
---unattended --keep-zshrc
-
-###############################################################################
-# ZSH PLUGINS
-###############################################################################
+    --unattended --keep-zshrc
 
 log "Installing Zsh plugins..."
 
@@ -212,50 +344,43 @@ git clone https://github.com/zsh-users/zsh-autosuggestions \
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
     "$HOME/.local/share/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" || true
 
-###############################################################################
-# SET ZSH AS DEFAULT SHELL
-###############################################################################
-
 if [[ "$SHELL" != "$(which zsh)" ]]; then
     chsh -s "$(which zsh)"
     warning "Log out and back in for Zsh to become default."
 fi
 
 ###############################################################################
-# TMUX CONFIG
+# TMUX
+# Always installed — multiplexer is useful in every environment.
 ###############################################################################
 
-log "Setting up tmux..."
+section "Tmux"
 
+log "Applying tmux config..."
 mkdir -p "$CONFIG/tmux"
 cp -r "$DOTFILES_DIR/.config/tmux/." "$CONFIG/tmux/"
 
 ###############################################################################
 # NODE (via FNM)
-#
-# We install FNM without modifying shell automatically.
-# Then manually load environment.
+# Always installed — JS tooling is needed everywhere.
 ###############################################################################
 
-# Install fnm only if not already installed
-if [ ! -d "$HOME/.local/share/fnm" ]; then
-  log "Installing Node.js LTS via fnm..."
+section "Node.js (via fnm)"
 
-  curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
+if [ ! -d "$HOME/.local/share/fnm" ]; then
+    log "Installing fnm..."
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
 fi
 
-# Ensure fnm is available in THIS script session
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "$(fnm env)"
 
-# Ensure Node 22 is installed
 if ! fnm list | grep -q "v22\."; then
-  log "Installing Node 22..."
-  fnm install 22
+    log "Installing Node 22..."
+    fnm install 22
 fi
 
 fnm use 22
-
 corepack enable
 corepack prepare pnpm@latest --activate
 
@@ -263,10 +388,166 @@ info "Node version: $(node -v)"
 info "pnpm version: $(pnpm -v)"
 
 ###############################################################################
+# DOCKER
+# Optional — great on bare metal/servers. WSL2 users typically use Docker Desktop.
+###############################################################################
+
+if [ "$DO_DOCKER" = true ]; then
+    section "Docker"
+
+    if ! command -v docker &>/dev/null; then
+        log "Installing Docker..."
+
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+            | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+        sudo apt update
+        sudo apt install -y \
+            docker-ce \
+            docker-ce-cli \
+            containerd.io \
+            docker-buildx-plugin \
+            docker-compose-plugin
+
+        # Allow running docker without sudo
+        sudo usermod -aG docker "$USER"
+
+        log "Docker installed."
+    else
+        info "Docker already installed, skipping."
+    fi
+fi
+
+###############################################################################
+# ALACRITTY
+# Optional — GPU-accelerated terminal. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_ALACRITTY" = true ]; then
+    section "Alacritty"
+
+    log "Installing Alacritty..."
+    sudo apt install -y alacritty
+
+    if [ -d "$DOTFILES_DIR/.config/alacritty" ]; then
+        mkdir -p "$CONFIG/alacritty"
+        cp -r "$DOTFILES_DIR/.config/alacritty/." "$CONFIG/alacritty/"
+        log "Alacritty config applied."
+    fi
+
+    log "Alacritty installed."
+fi
+
+###############################################################################
+# CHROMIUM
+# Optional — browser. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_CHROMIUM" = true ]; then
+    section "Chromium"
+
+    log "Installing Chromium..."
+    sudo apt install -y chromium
+    log "Chromium installed."
+fi
+
+###############################################################################
+# VS CODE
+# Optional — GUI editor. WSL2 users should use Windows VS Code + WSL extension.
+#            Useless on headless servers.
+###############################################################################
+
+if [ "$DO_VSCODE" = true ]; then
+    section "VS Code"
+
+    if ! command -v code &>/dev/null; then
+        log "Installing VS Code..."
+
+        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
+        sudo chmod a+r /etc/apt/keyrings/microsoft.gpg
+
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+            | sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
+
+        sudo apt update
+        sudo apt install -y code
+
+        log "VS Code installed."
+    else
+        info "VS Code already installed, skipping."
+    fi
+fi
+
+###############################################################################
+# DISCORD
+# Optional — desktop chat app. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_DISCORD" = true ]; then
+    section "Discord"
+
+    if ! command -v discord &>/dev/null; then
+        log "Installing Discord..."
+
+        DISCORD_DEB="/tmp/discord.deb"
+        wget -q -O "$DISCORD_DEB" "https://discord.com/api/download?platform=linux&format=deb"
+        sudo apt install -y "$DISCORD_DEB"
+        rm -f "$DISCORD_DEB"
+
+        log "Discord installed."
+    else
+        info "Discord already installed, skipping."
+    fi
+fi
+
+###############################################################################
+# OBS STUDIO
+# Optional — screen capture/streaming. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_OBS" = true ]; then
+    section "OBS Studio"
+
+    if ! command -v obs &>/dev/null; then
+        log "Installing OBS Studio..."
+        sudo apt install -y obs-studio
+        log "OBS Studio installed."
+    else
+        info "OBS Studio already installed, skipping."
+    fi
+fi
+
+###############################################################################
+# GOOGLE ANTIGRAVITY
+# Optional — browser extension helper. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_ANTIGRAVITY" = true ]; then
+    section "Google Antigravity"
+
+    log "Installing Google Antigravity..."
+    pip3 install antigravity --break-system-packages
+    log "Google Antigravity installed."
+fi
+
+###############################################################################
 # FINISHED
 ###############################################################################
 
-log "WSL2 CLI environment setup complete."
-log "It is recommended to restart WSL:"
-echo "  wsl --shutdown"
+section "Done"
 
+log "Debian CLI environment setup complete."
+echo ""
+info "Restart your shell:  exec zsh"
+
+if [ "$DO_DOCKER" = true ]; then
+    warning "Docker: log out and back in (or run 'newgrp docker') for group membership."
+fi
