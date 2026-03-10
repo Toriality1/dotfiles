@@ -16,7 +16,7 @@ floating_modifier $mod
 
 tiling_drag modifier titlebar
 
-bindsym $mod+Return exec alacritty
+bindsym $mod+Return exec alacritty -o font.size=24
 
 bindsym $mod+Shift+q kill
 
