@@ -311,6 +311,33 @@ rm -rf "$DOTFILES_DIR"
 git clone https://github.com/Toriality1/dotfiles.git "$DOTFILES_DIR"
 
 ###############################################################################
+# FONTS
+###############################################################################
+
+section "Fonts"
+
+log "Installing JetBrainsMono Nerd Font..."
+
+FONT_DIR="$HOME/.local/share/fonts/JetBrainsMono"
+
+if fc-list | grep -d "JetBrainsMono Nerd Font"; then
+  info "JetBrainsMono Nerd Font already installed, skipping."
+else
+  mkdir -p "$FONT_DIR"
+  FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.gz"
+  FONT_ARCHIVE="/tmp/JetBrainsMono.tar.gz"
+  wget -q -O "$FONT_ARCHIVE" "$FONT_URL"
+  tar xzf "$FONT_ARCHIVE" -C "$FONT_DIR"
+  rm -f "$FONT_ARCHIVE"
+
+  fc-cache -fv > /dev/null
+
+  log "JetBrainsMono Nerd Font installed."
+fi
+
+
+
+###############################################################################
 # NEOVIM (AppImage install)
 # Always installed — a terminal editor is useful in every environment.
 ###############################################################################
@@ -575,6 +602,7 @@ if [ "$DO_SPOTIFY" = true ]; then
     else
         info "Spotify already installed, skipping."
     fi
+fi
 
 ###############################################################################
 # VS CODIUM
