@@ -158,6 +158,12 @@ echo ""
 echo -e "${BLUE}The following are desktop/GUI apps — skip them if you're on WSL2 or a headless server.${NC}"
 echo ""
 
+ask_yes_no "Install i3wm? (window manager — skip on WSL2/server)" "n" \
+    && DO_I3=true || DO_I3=false
+
+ask_yes_no "Install pavucontrol? (audio mixer — skip on WSL2/server)" "n" \
+    && DO_PAVUCONTROL=true || DO_PAVUCONTROL=false
+
 ask_yes_no "Install Alacritty? (GPU terminal — skip on WSL2/server)" "n" \
     && DO_ALACRITTY=true || DO_ALACRITTY=false
 
@@ -434,6 +440,43 @@ https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
         log "Docker installed."
     else
         info "Docker already installed, skipping."
+    fi
+fi
+
+###############################################################################
+# I3 WINDOW MANAGER
+# Optional — window manager. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_I3" = true ]; then
+    section "i3 Window Manager"
+
+    if ! command -v i3 &>/dev/null; then
+        log "Installing i3wm and utilities..."
+
+        # Install i3 and useful extras
+        sudo apt install -y i3 i3status i3lock dmenu rofi
+
+        # Optional: install compositor for transparency & effects
+        sudo apt install -y picom
+
+        # Apply i3 config from dotfiles if present
+        if [ -d "$DOTFILES_DIR/.config/i3" ]; then
+            mkdir -p "$CONFIG/i3"
+            cp -r "$DOTFILES_DIR/.config/i3/." "$CONFIG/i3/"
+            log "i3 config applied from dotfiles."
+        fi
+
+        # Apply rofi config from dotfiles if present
+        if [ -d "$DOTFILES_DIR/.config/rofi" ]; then
+            mkdir -p "$CONFIG/rofi"
+            cp -r "$DOTFILES_DIR/.config/rofi/." "$CONFIG/rofi/"
+            log "rofi config applied from dotfiles."
+        fi
+
+        log "i3 Window Manager installed."
+    else
+        info "i3wm already installed, skipping."
     fi
 fi
 
