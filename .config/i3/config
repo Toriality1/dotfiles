@@ -2,7 +2,7 @@ set $mod Mod1
 font pango:monospace 12
 default_border pixel 1
 hide_edge_borders smart
-client.focused      #000000 #000000 #000000 #000000   #888888
+client.focused      #000000 #000000 #ffffffff #000000   #888888
 exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id xset -dpms s off
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
@@ -131,3 +131,5 @@ bar {
         binding_mode #ff0000 #ff0000 #ffffff
     }
 }
+
+for_window [title="toridesk prompt"] floating enable, resize set 600 60, move position center

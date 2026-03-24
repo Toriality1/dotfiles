@@ -30,7 +30,7 @@ NC='\033[0m'
 ###############################################################################
 
 CONFIG="$HOME/.config"
-DOTFILES_DIR="/tmp/dotfiles-bootstrap"
+DOTFILES_DIR="/tmp/dotfiles"
 
 ###############################################################################
 # ARGUMENT PARSING
@@ -148,7 +148,7 @@ echo -e "${BLUE}Answer a few questions before we begin. All installs will then r
 echo ""
 
 # --- GitHub ---
-ask_yes_no "Log in to GitHub with gh right now?" \
+ask_yes_no "Log in to GitHub with gh in this script?" \
     && DO_GH_LOGIN=true || DO_GH_LOGIN=false
 
 # --- Desktop GUI apps ---
@@ -164,8 +164,17 @@ ask_yes_no "Install Alacritty? (GPU terminal — skip on WSL2/server)" "n" \
 ask_yes_no "Install Chromium? (browser — skip on WSL2/server)" "n" \
     && DO_CHROMIUM=true || DO_CHROMIUM=false
 
-ask_yes_no "Install VS Code? (GUI editor — skip on WSL2/server; WSL2 users use Windows VS Code + WSL extension)" "n" \
+ask_yes_no "Install Epiphany? (browser — skip on WSL2/server)" "n" \
+    && DO_EPIPHANY=true || DO_EPIPHANY=false
+
+ask_yes_no "Install Spotify ? (music player — skip on WSL2/server)" "n" \
+    && DO_SPOTIFY=true || DO_SPOTIFY=false
+
+ask_yes_no "Install VSCodium? (IDE — skip on WSL2/server; WSL2 users use Windows VS Code + WSL extension)" "n" \
     && DO_VSCODE=true || DO_VSCODE=false
+
+ask_yes_no "Install Google Antigravity? (AI IDE — skip on WSL2/server)" "n" \
+  && DO_ANTIGRAVITY=true || DO_ANTIGRAVITY=false
 
 ask_yes_no "Install Discord? (desktop app — skip on WSL2/server)" "n" \
     && DO_DISCORD=true || DO_DISCORD=false
@@ -173,8 +182,8 @@ ask_yes_no "Install Discord? (desktop app — skip on WSL2/server)" "n" \
 ask_yes_no "Install OBS Studio? (screen capture — skip on WSL2/server)" "n" \
     && DO_OBS=true || DO_OBS=false
 
-ask_yes_no "Install Google Antigravity? (browser extension helper — skip on WSL2/server)" "n" \
-    && DO_ANTIGRAVITY=true || DO_ANTIGRAVITY=false
+ask_yes_no "Install QEMU/KVN + Virt Manager? (VM Host — skip on WSL2/server)" "n" \
+    && DO_QEMU=true || DO_QEMU=false
 
 # --- Server / environment-specific tools ---
 # Docker is great on bare metal and servers. WSL2 users typically use Docker
@@ -185,6 +194,7 @@ echo ""
 
 ask_yes_no "Install Docker? (WSL2 users typically use Docker Desktop on Windows instead)" "n" \
     && DO_DOCKER=true || DO_DOCKER=false
+
 
 echo ""
 log "Preferences collected. Starting installation..."
@@ -226,7 +236,8 @@ sudo apt install -y \
     python3 \
     python3-venv \
     python3-pip \
-    ripgrep
+    ripgrep \
+    btop
 
 log "Base packages installed."
 
@@ -445,6 +456,34 @@ if [ "$DO_ALACRITTY" = true ]; then
 fi
 
 ###############################################################################
+# QEMU / KVM / VIRT-MANAGER
+# Optional — virtualization. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_QEMU" = true ]; then
+  section "QEMU/KVM/Virt-Manager"
+
+  if ! command -v virsh &>/dev/null; then
+    log "Installing QEMU/KVM/Virt-Manager..."
+    sudo apt install -y \
+        qemu-system-x86 \
+        qemu-utils \
+        libvirt-daemon-system \
+        libvirt-clients \
+        virt-manager \
+        virtinst \
+        bridge-utils \
+        ovmf
+    sudo usermod -aG libvirt "$USER"
+    sudo usermod -aG kvm "$USER"
+    sudo systemctl enable --now libvirtd
+    log "QEMU/KVM/Virt-Manager installed."
+  else
+    info "QEMU/KVM/Virt-Manager already installed, skipping."
+  fi
+fi
+
+###############################################################################
 # CHROMIUM
 # Optional — browser. Useless in WSL2 or headless servers.
 ###############################################################################
@@ -458,31 +497,63 @@ if [ "$DO_CHROMIUM" = true ]; then
 fi
 
 ###############################################################################
-# VS CODE
+# EPIPHANY
+# Optional — browser. Useless in WSL2 or headless servers.
+###############################################################################
+
+if [ "$DO_EPIPHANY" = true ]; then
+    section "Epiphany"
+
+    if ! command -v epiphany-browser &>/dev/null; then
+        log "Installing Epiphany..."
+        sudo apt install -y epiphany-browser
+        log "Epiphany installed."
+    else
+        info "Epiphany already installed, skipping."
+    fi
+fi
+
+#############################################################################
+# SPOTIFY
+# Optional — music player. Useless in WSL2 or headless servers.
+#############################################################################
+
+if [ "$DO_SPOTIFY" = true ]; then
+    section "Spotify"
+
+    if ! command -v spotify &>/dev/null; then
+        log "Installing Spotify..."
+        curl -sS https://download.spotify.com/debian/pubkey_5384CE82BA52C83A.asc | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+        echo "deb https://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+        sudo apt-get update && sudo apt-get install spotify-client
+        log "Spotify installed."
+    else
+        info "Spotify already installed, skipping."
+    fi
+
+###############################################################################
+# VS CODIUM
 # Optional — GUI editor. WSL2 users should use Windows VS Code + WSL extension.
 #            Useless on headless servers.
 ###############################################################################
 
 if [ "$DO_VSCODE" = true ]; then
-    section "VS Code"
+    section "VS Codium"
 
     if ! command -v code &>/dev/null; then
-        log "Installing VS Code..."
+        log "Installing VS Codium..."
 
-        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-            | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
-        sudo chmod a+r /etc/apt/keyrings/microsoft.gpg
-
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/microsoft.gpg] \
-https://packages.microsoft.com/repos/code stable main" \
-            | sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
-
+        wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg \
+    | gpg --dearmor \
+    | sudo dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
+        echo -e 'Types: deb\nURIs: https://download.vscodium.com/debs\nSuites: vscodium\nComponents: main\nArchitectures: amd64 arm64\nSigned-by: /usr/share/keyrings/vscodium-archive-keyring.gpg' \
+| sudo tee /etc/apt/sources.list.d/vscodium.sources
         sudo apt update
-        sudo apt install -y code
+        sudo apt install -y codium
 
-        log "VS Code installed."
+        log "VS Codium installed."
     else
-        info "VS Code already installed, skipping."
+        info "VS Codium already installed, skipping."
     fi
 fi
 
@@ -533,9 +604,22 @@ fi
 if [ "$DO_ANTIGRAVITY" = true ]; then
     section "Google Antigravity"
 
-    log "Installing Google Antigravity..."
-    pip3 install antigravity --break-system-packages
-    log "Google Antigravity installed."
+    if ! command -v antigravity &>/dev/null; then
+      log "Installing Google Antigravity..."
+
+      sudo mkdir -p /etc/apt/keyrings
+      curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
+      sudo gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | \
+      sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
+
+      sudo apt update
+      sudo apt install -y antigravity
+
+      log "Google Antigravity installed."
+    else
+      info "Google Antigravity already installed, skipping."
+    fi
 fi
 
 ###############################################################################
@@ -550,4 +634,8 @@ info "Restart your shell:  exec zsh"
 
 if [ "$DO_DOCKER" = true ]; then
     warning "Docker: log out and back in (or run 'newgrp docker') for group membership."
+fi
+
+if [ "$DO_QEMU" = true ]; then
+    warning "QEMU: log out and back in (or run 'newgrp libvirt') for group membership."
 fi
