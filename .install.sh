@@ -237,7 +237,9 @@ sudo apt install -y \
     python3-venv \
     python3-pip \
     ripgrep \
-    btop
+    btop \
+    xclip
+
 
 log "Base packages installed."
 
