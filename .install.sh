@@ -696,6 +696,95 @@ if [ "$DO_ANTIGRAVITY" = true ]; then
 fi
 
 ###############################################################################
+# SERVICE CLEANUP (OPTIONAL)
+###############################################################################
+
+section "Service Cleanup"
+
+log "Configuring system services..."
+
+# Helper to disable safely
+disable_service() {
+    local service="$1"
+
+    if systemctl is-enabled "$service" &>/dev/null; then
+        log "Disabling $service..."
+        sudo systemctl disable --now "$service"
+    else
+        info "$service already disabled or not installed."
+    fi
+}
+
+echo -e "${BLUE}You can disable unused services to save RAM and speed up boot.${NC}"
+echo ""
+
+# --- Printing ---
+if ask_yes_no "Disable printing services (CUPS)?"; then
+    disable_service cups.service
+    disable_service cups-browsed.service
+fi
+
+# --- Bluetooth ---
+if ask_yes_no "Disable Bluetooth service?"; then
+    disable_service bluetooth.service
+fi
+
+# --- Avahi (mDNS) ---
+if ask_yes_no "Disable Avahi (local network discovery)?"; then
+    disable_service avahi-daemon.service
+fi
+
+# --- ModemManager ---
+if ask_yes_no "Disable ModemManager (mobile broadband)?"; then
+    disable_service ModemManager.service
+fi
+
+# --- Network wait ---
+if ask_yes_no "Disable NetworkManager-wait-online (can speed up boot)?"; then
+    disable_service NetworkManager-wait-online.service
+fi
+
+# --- iSCSI ---
+if ask_yes_no "Disable iSCSI service (open-iscsi)?"; then
+    disable_service open-iscsi.service
+fi
+
+# --- LVM ---
+if ask_yes_no "Disable LVM monitoring (only if not using LVM)?"; then
+    disable_service lvm2-monitor.service
+fi
+
+# --- Anacron ---
+if ask_yes_no "Disable anacron (not needed if PC is always on)?"; then
+    disable_service anacron.service
+fi
+
+# --- GPU switching ---
+if ask_yes_no "Disable switcheroo-control (only for dual-GPU laptops)?"; then
+    disable_service switcheroo-control.service
+fi
+
+# --- Docker (only if user chose not to install) ---
+if [ "$DO_DOCKER" = false ]; then
+    if ask_yes_no "Disable Docker services (not installed/used)?"; then
+        disable_service docker.service
+        disable_service containerd.service
+    fi
+fi
+
+# --- Virtualization (only if not installed) ---
+if [ "$DO_QEMU" = false ]; then
+    if ask_yes_no "Disable virtualization services (libvirt)?"; then
+        disable_service libvirtd.service
+        disable_service libvirt-guests.service
+        disable_service virtlogd.service
+        disable_service virtlockd.service
+    fi
+fi
+
+log "Service cleanup complete."
+
+###############################################################################
 # FINISHED
 ###############################################################################
 
