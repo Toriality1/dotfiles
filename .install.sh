@@ -191,6 +191,9 @@ ask_yes_no "Install OBS Studio? (screen capture — skip on WSL2/server)" "n" \
 ask_yes_no "Install QEMU/KVN + Virt Manager? (VM Host — skip on WSL2/server)" "n" \
     && DO_QEMU=true || DO_QEMU=false
 
+ask_yes_no "Install MongoDB Compass? (database GUI — skip on WSL2/server)" "n" \
+    && DO_MONGODB_COMPASS=true || DO_MONGODB_COMPASS=false
+
 # --- Server / environment-specific tools ---
 # Docker is great on bare metal and servers. WSL2 users typically use Docker
 # Desktop on the Windows side instead.
@@ -693,6 +696,27 @@ if [ "$DO_ANTIGRAVITY" = true ]; then
     else
       info "Google Antigravity already installed, skipping."
     fi
+fi
+
+###############################################################################
+# MONGODB COMPASS
+###############################################################################
+
+if [ "$DO_MONGODB_COMPASS" = true ]; then
+  section "MongoDB Compass"
+
+  if ! command -v mongodb-compass &>/dev/null; then
+      log "Installing MongoDB Compass..."
+
+          MONGO_DEB="/tmp/mongo.deb"
+          wget -q -O "$MONGO_DEB" "https://downloads.mongodb.com/compass/mongodb-compass_1.49.4_amd64.deb"
+          sudo apt install -y "$MONGO_DEB"
+          rm -f "$MONGO_DEB"
+
+      log "MongoDB Compass installed."
+  else
+      info "MongoDB Compass already installed, skipping."
+  fi
 fi
 
 ###############################################################################
