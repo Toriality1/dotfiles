@@ -487,6 +487,9 @@ if [ "$DO_I3" = true ]; then
         # Install i3 and useful extras
         sudo apt install -y i3 i3status i3lock dmenu rofi
 
+        # Install flameshot for screenshots
+        sudo apt install -y flameshot
+
         # Optional: install compositor for transparency & effects
         sudo apt install -y picom
 
