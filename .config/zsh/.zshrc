@@ -270,3 +270,6 @@ export ANDROID_HOME="$HOME/android-sdk"
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin"
 export PATH="$PATH:$ANDROID_HOME/platform-tools"
 export PATH="$PATH:$ANDROID_HOME/emulator"
+export PATH="$PATH:/usr/local/go/bin"
+# opencode
+export PATH=/home/tori/.opencode/bin:$PATH

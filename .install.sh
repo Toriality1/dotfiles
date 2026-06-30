@@ -247,8 +247,8 @@ sudo apt install -y \
     python3-pip \
     ripgrep \
     btop \
-    xclip
-
+    xclip \
+    yt-dlp
 
 log "Base packages installed."
 
@@ -408,6 +408,29 @@ section "Tmux"
 log "Applying tmux config..."
 mkdir -p "$CONFIG/tmux"
 cp -r "$DOTFILES_DIR/.config/tmux/." "$CONFIG/tmux/"
+
+###############################################################################
+# Golang
+# Always installed — Go is useful in every environment.
+###############################################################################
+
+section "Golang"
+
+if ! command -v go &>/dev/null; then
+    log "Installing Go..."
+
+    GO_VERSION="1.26.1"
+    GO_URL="https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+    GO_ARCHIVE="/tmp/go.tar.gz"
+    wget -O "$GO_ARCHIVE" "$GO_URL"
+    sudo rm -rf /usr/local/go
+    sudo tar xf "$GO_ARCHIVE" -C /usr/local
+    rm -f "$GO_ARCHIVE"
+    export PATH=$PATH:/usr/local/go/bin
+    info "Go version: $(go version)"
+else
+    info "Go already installed, skipping."
+fi
 
 ###############################################################################
 # NODE (via FNM)

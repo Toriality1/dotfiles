@@ -1,5 +1,5 @@
 set $mod Mod1
-font pango:monospace 12
+font pango:monospace 8
 default_border pixel 1
 hide_edge_borders smart
 client.focused      #000000 #000000 #ffffffff #000000   #888888
@@ -7,6 +7,8 @@ exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id xset -dpms s off
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 exec --no-startup-id nm-applet
+exec --no-startup-id dunst
+exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh
 set $refresh_i3status killall -SIGUSR1 i3status
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
 bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
@@ -117,6 +119,7 @@ exec --no-startup-id xrandr --output HDMI-1 --mode "1920x1080"
 exec --no-startup-id lxpolkit
 exec_always --no-startup-id setxkbmap -option "caps:swapescape,lv3:ralt_alt,grp:lwin_toggle" -layout us,br -variant altgr-intl,
 
+exec --no-startup-id flameshot
 bindsym Print exec flameshot gui
 
 bindsym $mod+Shift+Escape exec --no-startup-id i3lock
@@ -131,5 +134,3 @@ bar {
         binding_mode #ff0000 #ff0000 #ffffff
     }
 }
-
-for_window [title="toridesk prompt"] floating enable, resize set 600 60, move position center

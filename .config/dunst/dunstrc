@@ -1,0 +1,34 @@
+[global]
+    follow = mouse
+
+    width = 600
+    height = 400
+    origin = bottom-right
+    offset = 16x32
+
+    scale = 0
+    notification_limit = 5
+
+    progress_bar = true
+    progress_bar_height = 6
+
+    padding = 18
+    horizontal_padding = 18
+
+    separator_height = 2
+    separator_color = frame
+
+    line_height = 3
+    markup = full
+    format = "<b>%s</b>\n%b"
+
+    alignment = left
+    vertical_alignment = center
+
+    show_age_threshold = 60
+    word_wrap = true
+
+    idle_threshold = 120
+    corner_radius = 12
+
+    font = JetBrainsMono Nerd Font 12
