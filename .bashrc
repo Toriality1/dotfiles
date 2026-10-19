@@ -45,4 +45,21 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-export ZDOTDIR=$HOME/.config/zsh
+
+# User tools; keep PATH stable when reloading this file.
+for tool_dir in "$HOME/.local/bin" "$HOME/.maestro/bin"; do
+    if [ -d "$tool_dir" ]; then
+        case ":$PATH:" in
+            *":$tool_dir:"*) ;;
+            *)
+                if [ "$tool_dir" = "$HOME/.local/bin" ]; then
+                    PATH="$tool_dir:$PATH"
+                else
+                    PATH="$PATH:$tool_dir"
+                fi
+                ;;
+        esac
+    fi
+done
+export PATH
+unset tool_dir

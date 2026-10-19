@@ -1,118 +1,63 @@
 return {
-    "neovim/nvim-lspconfig",
-    dependencies = {
-        "williamboman/mason.nvim",
-        "williamboman/mason-lspconfig.nvim",
-        "hrsh7th/cmp-nvim-lsp",
-        "hrsh7th/cmp-buffer",
-        "hrsh7th/cmp-path",
-        "hrsh7th/cmp-cmdline",
-        "hrsh7th/nvim-cmp",
-        "L3MON4D3/LuaSnip",
-        "saadparwaiz1/cmp_luasnip",
-        'stevearc/conform.nvim',
-    },
+  "neovim/nvim-lspconfig",
+  event = { "BufReadPre", "BufNewFile" },
+  dependencies = {
+    "williamboman/mason.nvim",
+    "williamboman/mason-lspconfig.nvim",
+    "hrsh7th/cmp-nvim-lsp",
+  },
+  config = function()
+    vim.lsp.config("*", {
+      capabilities = require("cmp_nvim_lsp").default_capabilities(),
+    })
 
-    config = function()
-        vim.lsp.enable('laravel_ls')
+    vim.lsp.config("lua_ls", {
+      settings = {
+        Lua = {
+          format = {
+            enable = true,
+            defaultConfig = { indent_style = "space", indent_size = "2" },
+          },
+        },
+      },
+    })
 
-        require("conform").setup({
-            formatters_by_ft = {
-                lua = { "stylua" },
-                html = { "prettierd" },
-                css = { "prettierd" },
-                javascript = { "prettierd" },
-                javascriptreact = { "prettierd" },
-                typescript = { "prettierd" },
-                typescriptreact = { "prettierd" },
-                astro = { "prettierd" },
-                markdown = { "prettierd" },
-                json = { "prettierd" },
-                yaml = { "prettierd" },
-                graphql = { "prettierd" },
-            },
-        })
+    vim.lsp.config("intelephense", {
+      settings = {
+        intelephense = {
+          files = { maxSize = 5000000 },
+          environment = {
+            includePaths = { "vendor/laravel/framework/src/Illuminate/Support" },
+          },
+          -- Keep the server's default stub set instead of copying its inventory.
+        },
+      },
+    })
 
-        vim.keymap.set({ "n", "v" }, "<leader>f", function()
-            require("conform").format({ async = true, lsp_fallback = true })
-        end, { desc = "Format file or range" })
+    vim.lsp.config("laravel_ls", { filetypes = { "php", "blade" } })
 
+    require("mason").setup()
+    require("mason-lspconfig").setup({
+      ensure_installed = { "lua_ls", "intelephense", "ts_ls", "tailwindcss", "eslint" },
+      automatic_enable = true,
+    })
+    require("toriality.tools").setup(function(name)
+      if name == "laravel-ls" then
+        vim.lsp.enable("laravel_ls")
+      end
+    end)
 
-        local cmp = require('cmp')
-        local cmp_lsp = require("cmp_nvim_lsp")
-        local capabilities = vim.tbl_deep_extend(
-            "force",
-            {},
-            vim.lsp.protocol.make_client_capabilities(),
-            cmp_lsp.default_capabilities())
-
-        require("mason").setup()
-        require("mason-lspconfig").setup({
-            ensure_installed = {
-                "lua_ls",
-            },
-            handlers = {
-                function(server_name) -- default handler (optional)
-                    require("lspconfig")[server_name].setup {
-                        capabilities = capabilities
-                    }
-                end,
-                ["lua_ls"] = function()
-                    local lspconfig = require("lspconfig")
-                    lspconfig.lua_ls.setup {
-                        capabilities = capabilities,
-                        settings = {
-                            Lua = {
-                                format = {
-                                    enable = true,
-                                    -- Put format options here
-                                    -- NOTE: the value should be STRING!!
-                                    defaultConfig = {
-                                        indent_style = "space",
-                                        indent_size = "2",
-                                    }
-                                },
-                            }
-                        }
-                    }
-                end,
-            }
-        })
-
-        local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-        cmp.setup({
-            snippet = {
-                expand = function(args)
-                    require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-                end,
-            },
-
-            mapping = cmp.mapping.preset.insert({
-                ['<C-p>'] = cmp.mapping.select_prev_item(cmp_select),
-                ['<C-n>'] = cmp.mapping.select_next_item(cmp_select),
-                ['<C-Space>'] = cmp.mapping.confirm({ select = true }),
-                ["<C-y>"] = cmp.mapping.complete(),
-            }),
-
-            sources = cmp.config.sources({
-                { name = "codeium" },
-                { name = 'nvim_lsp' },
-                { name = 'luasnip' }, -- For luasnip users.
-            }, {
-                { name = 'buffer' },
-            })
-        })
-
-        vim.diagnostic.config({
-            float = {
-                focusable = true,
-                style = "minimal",
-                border = "rounded",
-                source = "always",
-                header = "",
-                prefix = "",
-            },
-        })
-    end
+    vim.diagnostic.config({
+      virtual_text = true,
+      jump = { float = true },
+      float = {
+        focusable = true,
+        style = "minimal",
+        border = "rounded",
+        source = true,
+        header = "",
+        prefix = "",
+      },
+    })
+  end,
 }

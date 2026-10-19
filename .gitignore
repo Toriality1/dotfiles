@@ -1,29 +1,36 @@
-# Ignore everything
+# Track only the dotfiles maintained in this repository.
 *
 
-# But not config files
 !.gitignore
 !.install.sh
 !.install.sh.OLD
 !.bashrc
 !.zshenv
+!todo.md
+!TODO.md
+
 !.config/
-!.config/alacritty
+!.config/alacritty/
 !.config/alacritty/alacritty.toml
-!.config/picom
-!.config/picom/picom.conf
-!.config/rofi
+!.config/rofi/
 !.config/rofi/config.rasi
-!.config/nvim/
-!.config/nvim/**
-!.config/i3/
-!.config/i3/**
-!.config/i3status/
-!.config/i3status/**
 !.config/dunst/
-!.config/dunst/**
+!.config/dunst/dunstrc
+!.config/i3/
+!.config/i3/config
+!.config/i3/machine.conf
 !.config/tmux/
 !.config/tmux/tmux.conf
+!.config/tmux/clipboard.sh
 !.config/zsh/
 !.config/zsh/.zshrc
-!todo.md
+
+!.config/nvim/
+!.config/nvim/init.lua
+!.config/nvim/lazy-lock.json
+!.config/nvim/stylua.toml
+!.config/nvim/lua/
+!.config/nvim/lua/toriality/
+!.config/nvim/lua/toriality/*.lua
+!.config/nvim/lua/toriality/lazy/
+!.config/nvim/lua/toriality/lazy/*.lua
