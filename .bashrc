@@ -63,3 +63,10 @@ for tool_dir in "$HOME/.local/bin" "$HOME/.maestro/bin"; do
 done
 export PATH
 unset tool_dir
+
+# fnm provides a per-shell Node PATH, including globally installed AI CLIs.
+if command -v fnm >/dev/null 2>&1; then
+    eval "$(fnm env --shell bash)"
+fi
+
+[ ! -r "${XDG_CONFIG_HOME:-$HOME/.config}/android/env.sh" ] || . "${XDG_CONFIG_HOME:-$HOME/.config}/android/env.sh"

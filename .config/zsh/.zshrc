@@ -1,5 +1,6 @@
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+[ ! -r "${XDG_CONFIG_HOME:-$HOME/.config}/android/env.sh" ] || . "${XDG_CONFIG_HOME:-$HOME/.config}/android/env.sh"
 export ZSH="${ZSH:-$XDG_DATA_HOME/.oh-my-zsh}"
 export HISTFILE="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}/.zsh_history"
 
@@ -11,9 +12,9 @@ typeset -U path PATH
 export FNM_PATH="${FNM_PATH:-$XDG_DATA_HOME/fnm}"
 export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
 export PNPM_HOME="${PNPM_HOME:-$XDG_DATA_HOME/pnpm}"
-export ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
-if [[ -z "$JAVA_HOME" && -d "$HOME/android-studio/jbr" ]]; then
-  export JAVA_HOME="$HOME/android-studio/jbr"
+export ANDROID_HOME="${ANDROID_HOME:-$XDG_DATA_HOME/android/sdk}"
+if [[ -z "$JAVA_HOME" && -d "$XDG_DATA_HOME/android/studio/jbr" ]]; then
+  export JAVA_HOME="$XDG_DATA_HOME/android/studio/jbr"
 fi
 
 typeset -a tool_paths
@@ -28,7 +29,7 @@ for tool_dir in \
   "$ANDROID_HOME/cmdline-tools/latest/bin" \
   "$ANDROID_HOME/platform-tools" \
   "$ANDROID_HOME/emulator" \
-  "$HOME/android-studio/bin" \
+  "$XDG_DATA_HOME/android/studio/bin" \
   "${JAVA_HOME:+$JAVA_HOME/bin}" \
   "$HOME/.maestro/bin" \
   /usr/local/go/bin; do
