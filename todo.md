@@ -1,1 +1,0 @@
-- Installing Nerd Fonts -> Necesary in Vim plugin to view Markdown

@@ -3,11 +3,8 @@
 
 !.gitignore
 !.install.sh
-!.install.sh.OLD
 !.bashrc
 !.zshenv
-!todo.md
-!TODO.md
 
 !.config/
 !.config/alacritty/
@@ -34,3 +31,18 @@
 !.config/nvim/lua/toriality/*.lua
 !.config/nvim/lua/toriality/lazy/
 !.config/nvim/lua/toriality/lazy/*.lua
+
+# Installer entry points, implementation, documentation, and tests.
+!README.md
+!install.ps1
+!install.sh
+!installer/
+!installer/*.sh
+!installer/*.conf
+!installer/*.ps1
+!installer/backends/
+!installer/backends/*.sh
+!installer/backends/*.conf
+!tests/
+!tests/test_*.sh
+!tests/test_*.ps1
